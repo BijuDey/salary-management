@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Bricolage_Grotesque, Public_Sans } from 'next/font/google';
-import { AppShell } from '@/components/app-shell';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
@@ -24,9 +23,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${publicSans.variable} ${bricolage.variable} antialiased`}>
       <body>
-        <Providers>
-          <AppShell>{children}</AppShell>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

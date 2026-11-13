@@ -12,10 +12,12 @@ import type {
   PaySummary,
   ReferenceData,
   RoleInsights,
+  Session,
 } from './types';
 
 /** One place for cache keys, so invalidation after a mutation is never guesswork. */
 export const queryKeys = {
+  session: ['session'] as const,
   reference: ['reference'] as const,
   employees: ['employees'] as const,
   employeeList: (params: EmployeeListParams) => ['employees', 'list', params] as const,
@@ -25,6 +27,33 @@ export const queryKeys = {
   roleInsights: (country?: string, department?: string) =>
     ['insights', 'roles', { country, department }] as const,
 };
+
+export function useSession() {
+  return useQuery({
+    queryKey: queryKeys.session,
+    queryFn: () => apiRequest<Session>('/api/auth/session'),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useSignIn() {
+  return useMutation({
+    mutationFn: (credentials: { username: string; password: string }) =>
+      apiRequest<Pick<Session, 'username'>>('/api/auth/login', {
+        method: 'POST',
+        body: credentials,
+      }),
+  });
+}
+
+export function useSignOut() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiRequest<void>('/api/auth/logout', { method: 'POST' }),
+    // Drop every cached salary figure so nothing lingers in memory after signing out.
+    onSuccess: () => queryClient.clear(),
+  });
+}
 
 export function useReferenceData() {
   return useQuery({

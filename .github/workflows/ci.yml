@@ -21,4 +21,4 @@ jobs:
       - run: pnpm test
       - run: pnpm build
         env:
-          NEXT_PUBLIC_API_URL: https://api.example.com
+          API_URL: https://api.example.com

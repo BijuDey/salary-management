@@ -3,6 +3,11 @@
  * any drift easy to spot (see docs/03-decisions.md on why there is no shared package yet).
  */
 
+export interface Session {
+  username: string;
+  expiresAt: string;
+}
+
 export type EmploymentType = 'full_time' | 'part_time' | 'contract';
 
 export interface Country {

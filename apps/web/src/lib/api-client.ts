@@ -1,5 +1,3 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-
 export interface FieldError {
   path: string;
   message: string;
@@ -37,7 +35,8 @@ export async function apiRequest<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    // Same-origin request: Next.js proxies /api/* to the API, and the session cookie rides along.
+    response = await fetch(path, {
       ...init,
       headers:
         body === undefined ? init.headers : { 'content-type': 'application/json', ...init.headers },
