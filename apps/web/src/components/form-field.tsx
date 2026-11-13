@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
@@ -39,4 +39,14 @@ export function fieldAria(id: string, error?: string) {
     'aria-invalid': error ? true : undefined,
     'aria-describedby': error ? `${id}-error` : `${id}-hint`,
   } as const;
+}
+
+/**
+ * Returns an id factory unique to this form instance. Fixed ids break as soon as two copies of a
+ * form are in the document (Next.js keeps the previous page mounted for instant back-navigation):
+ * labels and `form=` attributes would then point at the hidden copy.
+ */
+export function useFieldIds(): (name: string) => string {
+  const prefix = useId();
+  return (name) => `${prefix}-${name}`;
 }

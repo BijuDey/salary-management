@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { fieldAria, FormField } from '@/components/form-field';
+import { fieldAria, FormField, useFieldIds } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -42,6 +42,8 @@ interface SalaryChangeDialogProps {
 
 export function SalaryChangeDialog({ employee, open, onOpenChange }: SalaryChangeDialogProps) {
   const updateEmployee = useUpdateEmployee(employee.id);
+  const fieldId = useFieldIds();
+  const formId = fieldId('form');
   const { register, control, handleSubmit, formState, reset, setError } =
     useForm<SalaryChangeFormValues>({
       resolver: zodResolver(salaryChangeFormSchema),
@@ -94,9 +96,9 @@ export function SalaryChangeDialog({ employee, open, onOpenChange }: SalaryChang
           </DialogDescription>
         </DialogHeader>
 
-        <form id="salary-change-form" onSubmit={onSubmit} noValidate className="grid gap-4">
+        <form id={formId} onSubmit={onSubmit} noValidate className="grid gap-4">
           <FormField
-            id="newSalary"
+            id={fieldId('newSalary')}
             label={`New annual salary (${employee.currency})`}
             error={errors.annualSalary?.message}
             hint={
@@ -116,26 +118,26 @@ export function SalaryChangeDialog({ employee, open, onOpenChange }: SalaryChang
               inputMode="numeric"
               autoFocus
               {...register('annualSalary')}
-              {...fieldAria('newSalary', errors.annualSalary?.message)}
+              {...fieldAria(fieldId('newSalary'), errors.annualSalary?.message)}
               className="tabular"
             />
           </FormField>
-          <FormField id="reason" label="Reason" error={errors.reason?.message}>
+          <FormField id={fieldId('reason')} label="Reason" error={errors.reason?.message}>
             <Input
               placeholder="e.g. Promotion to Senior Software Engineer"
               {...register('reason')}
-              {...fieldAria('reason', errors.reason?.message)}
+              {...fieldAria(fieldId('reason'), errors.reason?.message)}
             />
           </FormField>
           <FormField
-            id="effectiveDate"
+            id={fieldId('effectiveDate')}
             label="Effective from"
             error={errors.effectiveDate?.message}
           >
             <Input
               type="date"
               {...register('effectiveDate')}
-              {...fieldAria('effectiveDate', errors.effectiveDate?.message)}
+              {...fieldAria(fieldId('effectiveDate'), errors.effectiveDate?.message)}
             />
           </FormField>
         </form>
@@ -144,7 +146,7 @@ export function SalaryChangeDialog({ employee, open, onOpenChange }: SalaryChang
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" form="salary-change-form" disabled={formState.isSubmitting}>
+          <Button type="submit" form={formId} disabled={formState.isSubmitting}>
             {formState.isSubmitting ? 'Saving…' : 'Save salary'}
           </Button>
         </DialogFooter>

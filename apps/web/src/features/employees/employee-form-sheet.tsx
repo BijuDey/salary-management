@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch, type Path } from 'react-hook-form';
 import { toast } from 'sonner';
-import { fieldAria, FormField } from '@/components/form-field';
+import { fieldAria, FormField, useFieldIds } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -55,6 +55,8 @@ export function EmployeeFormSheet({
   const { data: reference } = useReferenceData();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee(employee?.id ?? 0);
+  const fieldId = useFieldIds();
+  const formId = fieldId('form');
 
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
@@ -110,41 +112,45 @@ export function EmployeeFormSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <form id="employee-form" onSubmit={onSubmit} noValidate className="grid gap-4 px-4 pb-4">
+        <form id={formId} onSubmit={onSubmit} noValidate className="grid gap-4 px-4 pb-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="firstName" label="First name" error={errors.firstName?.message}>
+            <FormField
+              id={fieldId('firstName')}
+              label="First name"
+              error={errors.firstName?.message}
+            >
               <Input
                 {...register('firstName')}
-                {...fieldAria('firstName', errors.firstName?.message)}
+                {...fieldAria(fieldId('firstName'), errors.firstName?.message)}
                 autoComplete="off"
               />
             </FormField>
-            <FormField id="lastName" label="Last name" error={errors.lastName?.message}>
+            <FormField id={fieldId('lastName')} label="Last name" error={errors.lastName?.message}>
               <Input
                 {...register('lastName')}
-                {...fieldAria('lastName', errors.lastName?.message)}
+                {...fieldAria(fieldId('lastName'), errors.lastName?.message)}
                 autoComplete="off"
               />
             </FormField>
           </div>
 
-          <FormField id="email" label="Work email" error={errors.email?.message}>
+          <FormField id={fieldId('email')} label="Work email" error={errors.email?.message}>
             <Input
               type="email"
               {...register('email')}
-              {...fieldAria('email', errors.email?.message)}
+              {...fieldAria(fieldId('email'), errors.email?.message)}
               autoComplete="off"
             />
           </FormField>
 
-          <FormField id="jobTitle" label="Job title" error={errors.jobTitle?.message}>
+          <FormField id={fieldId('jobTitle')} label="Job title" error={errors.jobTitle?.message}>
             <Input
-              list="job-title-suggestions"
+              list={fieldId('jobTitleSuggestions')}
               {...register('jobTitle')}
-              {...fieldAria('jobTitle', errors.jobTitle?.message)}
+              {...fieldAria(fieldId('jobTitle'), errors.jobTitle?.message)}
               autoComplete="off"
             />
-            <datalist id="job-title-suggestions">
+            <datalist id={fieldId('jobTitleSuggestions')}>
               {reference?.jobTitles.map((title) => (
                 <option key={title} value={title} />
               ))}
@@ -152,7 +158,11 @@ export function EmployeeFormSheet({
           </FormField>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="department" label="Department" error={errors.department?.message}>
+            <FormField
+              id={fieldId('department')}
+              label="Department"
+              error={errors.department?.message}
+            >
               <Controller
                 control={control}
                 name="department"
@@ -160,7 +170,7 @@ export function EmployeeFormSheet({
                   <Select value={field.value || undefined} onValueChange={field.onChange}>
                     <SelectTrigger
                       className="w-full"
-                      {...fieldAria('department', errors.department?.message)}
+                      {...fieldAria(fieldId('department'), errors.department?.message)}
                     >
                       <SelectValue placeholder="Choose department" />
                     </SelectTrigger>
@@ -176,7 +186,7 @@ export function EmployeeFormSheet({
               />
             </FormField>
             <FormField
-              id="employmentType"
+              id={fieldId('employmentType')}
               label="Employment type"
               error={errors.employmentType?.message}
             >
@@ -185,7 +195,7 @@ export function EmployeeFormSheet({
                 name="employmentType"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full" {...fieldAria('employmentType')}>
+                    <SelectTrigger className="w-full" {...fieldAria(fieldId('employmentType'))}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -205,7 +215,7 @@ export function EmployeeFormSheet({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
-              id="countryCode"
+              id={fieldId('countryCode')}
               label="Country"
               error={errors.countryCode?.message}
               hint={currency && `Paid in ${currency}`}
@@ -217,7 +227,7 @@ export function EmployeeFormSheet({
                   <Select value={field.value || undefined} onValueChange={field.onChange}>
                     <SelectTrigger
                       className="w-full"
-                      {...fieldAria('countryCode', errors.countryCode?.message)}
+                      {...fieldAria(fieldId('countryCode'), errors.countryCode?.message)}
                     >
                       <SelectValue placeholder="Choose country" />
                     </SelectTrigger>
@@ -232,11 +242,11 @@ export function EmployeeFormSheet({
                 )}
               />
             </FormField>
-            <FormField id="hireDate" label="Hire date" error={errors.hireDate?.message}>
+            <FormField id={fieldId('hireDate')} label="Hire date" error={errors.hireDate?.message}>
               <Input
                 type="date"
                 {...register('hireDate')}
-                {...fieldAria('hireDate', errors.hireDate?.message)}
+                {...fieldAria(fieldId('hireDate'), errors.hireDate?.message)}
               />
             </FormField>
           </div>
@@ -252,7 +262,7 @@ export function EmployeeFormSheet({
                 </p>
               )}
               <FormField
-                id="annualSalary"
+                id={fieldId('annualSalary')}
                 label={`Annual base salary${currency ? ` (${currency})` : ''}`}
                 error={errors.annualSalary?.message}
               >
@@ -260,20 +270,20 @@ export function EmployeeFormSheet({
                   inputMode="numeric"
                   placeholder="e.g. 85000"
                   {...register('annualSalary')}
-                  {...fieldAria('annualSalary', errors.annualSalary?.message)}
+                  {...fieldAria(fieldId('annualSalary'), errors.annualSalary?.message)}
                   className="bg-card tabular"
                 />
               </FormField>
               {currencyChanges && (
                 <FormField
-                  id="salaryReason"
+                  id={fieldId('salaryReason')}
                   label="Reason for change"
                   error={errors.salaryReason?.message}
                 >
                   <Input
                     placeholder="e.g. Relocation to Berlin office"
                     {...register('salaryReason')}
-                    {...fieldAria('salaryReason', errors.salaryReason?.message)}
+                    {...fieldAria(fieldId('salaryReason'), errors.salaryReason?.message)}
                     className="bg-card"
                   />
                 </FormField>
@@ -286,7 +296,7 @@ export function EmployeeFormSheet({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" form="employee-form" disabled={formState.isSubmitting}>
+          <Button type="submit" form={formId} disabled={formState.isSubmitting}>
             {formState.isSubmitting ? 'Saving…' : isEditing ? 'Save changes' : 'Add employee'}
           </Button>
         </SheetFooter>
