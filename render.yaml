@@ -1,0 +1,17 @@
+# Render Blueprint for the API. The web app deploys to Vercel (root directory: apps/web).
+services:
+  - type: web
+    name: salary-management-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGINS
+        sync: false # e.g. https://salary-management.vercel.app
+    # A persistent disk keeps edits across deploys (requires a paid instance).
+    # Without it the container reseeds the same deterministic 10k employees on each deploy.
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
