@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import BetterSqlite3 from 'better-sqlite3';
+import BetterSqlite3, { type RunResult } from 'better-sqlite3';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
@@ -10,7 +10,7 @@ import * as schema from './schema.js';
 export type Database = BetterSQLite3Database<typeof schema>;
 
 /** Anything queries can run against: the database itself or an open transaction. */
-export type DbExecutor = BaseSQLiteDatabase<'sync', unknown, typeof schema>;
+export type DbExecutor = BaseSQLiteDatabase<'sync', RunResult, typeof schema>;
 
 export interface DatabaseHandle {
   db: Database;

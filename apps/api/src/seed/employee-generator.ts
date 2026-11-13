@@ -13,7 +13,12 @@ import {
   type Faker,
 } from '@faker-js/faker';
 import type { NewEmployeeRow, NewSalaryChangeRow } from '../db/schema.js';
-import { DEPARTMENTS, INITIAL_SALARY_REASON, type EmploymentType } from '../domain/employee.js';
+import {
+  DEPARTMENTS,
+  INITIAL_SALARY_REASON,
+  formatEmployeeCode,
+  type EmploymentType,
+} from '../domain/employee.js';
 import { DEPARTMENT_WEIGHTS, JOB_CATALOGUE } from './job-catalogue.js';
 import { COUNTRIES } from './reference-data.js';
 
@@ -104,7 +109,7 @@ export function generateEmployees({
 
     const employee = {
       id,
-      employeeCode: `EMP-${String(id).padStart(5, '0')}`,
+      employeeCode: formatEmployeeCode(id),
       firstName,
       lastName,
       email: uniqueEmail(firstName, lastName, usedEmails),

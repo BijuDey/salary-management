@@ -23,3 +23,8 @@ export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
 
 /** Reason recorded against the first salary history entry of every employee. */
 export const INITIAL_SALARY_REASON = 'Initial salary';
+
+/** Human-friendly employee identifier, e.g. `EMP-00042`. */
+export function formatEmployeeCode(sequence: number): string {
+  return `EMP-${String(sequence).padStart(5, '0')}`;
+}
