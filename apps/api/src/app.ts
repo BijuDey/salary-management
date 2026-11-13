@@ -38,7 +38,11 @@ export async function buildApp({
 }: AppOptions): Promise<FastifyInstance> {
   const app = Fastify({ logger });
 
-  await app.register(cors, { origin: corsOrigins });
+  await app.register(cors, {
+    origin: corsOrigins,
+    // The default only covers simple requests; the UI also edits and deletes.
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  });
 
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) => {

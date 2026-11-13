@@ -111,6 +111,28 @@ describe('Employee routes', () => {
     expect((await app.inject({ url: `/api/employees/${id}` })).statusCode).toBe(404);
   });
 
+  it('allows the configured UI origin to PATCH and DELETE (CORS preflight)', async () => {
+    const corsApp = await buildApp({
+      db: createTestDatabase(),
+      corsOrigins: ['http://localhost:3000'],
+    });
+
+    const response = await corsApp.inject({
+      method: 'OPTIONS',
+      url: '/api/employees/1',
+      headers: {
+        origin: 'http://localhost:3000',
+        'access-control-request-method': 'PATCH',
+      },
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    expect(response.headers['access-control-allow-methods']).toContain('PATCH');
+    expect(response.headers['access-control-allow-methods']).toContain('DELETE');
+    await corsApp.close();
+  });
+
   it('returns a JSON 404 for unknown routes', async () => {
     const response = await app.inject({ url: '/api/nope' });
     expect(response.statusCode).toBe(404);
