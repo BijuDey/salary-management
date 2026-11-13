@@ -16,9 +16,11 @@ countries, and to answer _"how does the organisation pay people?"_ without a spr
 | -------------------------------------------- | ---------------------------------------------------------- |
 | ![Directory](docs/screenshots/directory.jpg) | ![Employee profile](docs/screenshots/employee-profile.jpg) |
 
-| Live app                 | API                      |
-| ------------------------ | ------------------------ |
-| _added after deployment_ | _added after deployment_ |
+| Live app                                                                       | API                                                                                | Demo video                                                                                                  |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [salary-management-woad.vercel.app](https://salary-management-woad.vercel.app) | [API health check](https://salary-management-api-production.up.railway.app/health) | [Watch on Google Drive](https://drive.google.com/file/d/1KiVCHn7lltlW2NnMOU8DcJp6U1h7tYQe/view?usp=sharing) |
+
+The live app requires sign-in; credentials are shared with reviewers separately.
 
 ## Documentation
 
