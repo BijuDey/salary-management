@@ -16,7 +16,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'ACME Pay', template: '%s · ACME Pay' },
+  title: { default: 'ACME Pay', template: '%s – ACME Pay' },
   description: 'Manage employee salaries and understand how ACME pays people.',
 };
 
