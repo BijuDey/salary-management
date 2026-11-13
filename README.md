@@ -5,6 +5,8 @@ countries, and to answer _"how does the organisation pay people?"_ without a spr
 
 - **Directory:** search, filter and sort 10k employees; add, edit and delete them.
 - **Auditable pay changes:** every salary change needs a reason and lands in a history timeline.
+- **Secure by default:** the HR Manager signs in before seeing anything; every API endpoint is
+  protected.
 - **Pay insights:** org-wide figures, distribution, pay by department, by country (local currency
   and USD) and by role, with pay bands that show where any salary sits among its peers.
 
@@ -54,8 +56,11 @@ cp apps/web/.env.example apps/web/.env.local
 pnpm --filter @salary/web dev
 ```
 
-If ports 3000/4000 are taken, set `PORT` and `CORS_ORIGINS` in `apps/api/.env`,
-`NEXT_PUBLIC_API_URL` in `apps/web/.env.local`, and run the web app with `-- --port <n>`.
+Sign in locally with `hr.manager` / `local-dev-password`. These credentials are defined in
+`apps/api/.env.example` and are for local development only.
+
+If ports 3000/4000 are taken, set `PORT` in `apps/api/.env`, `API_URL` in
+`apps/web/.env.local`, and run the web app with `-- --port <n>`.
 
 Seed options: `pnpm db:seed --count=500`, `--seed=7` (different but reproducible data), and
 `--if-empty` (only seed a fresh database; used on deploy).
@@ -63,7 +68,7 @@ Seed options: `pnpm db:seed --count=500`, `--seed=7` (different but reproducible
 ## Quality checks
 
 ```bash
-pnpm test        # 67 API + 28 web tests
+pnpm test        # 94 API + 37 web tests
 pnpm typecheck
 pnpm lint
 pnpm build
@@ -76,9 +81,10 @@ The same checks run in CI on every push.
 - **API:** statistics maths (matching spreadsheet PERCENTILE.INC), currency conversion, seed
   determinism and realism, employee business rules (salary history, relocation across
   currencies, duplicate emails, search escaping, USD-normalised sorting), insights
-  aggregation, and every HTTP route including error contracts and CORS.
+  aggregation, every HTTP route including error contracts, and authentication (password hashing,
+  session expiry and tampering, rate limiting, and a 401 check for every protected endpoint).
 - **Web:** formatting, API error mapping, URL state parsing, form validation and form-to-API
-  diffing, and pay band accessibility and geometry.
+  diffing, safe post-login redirects, and pay band accessibility and geometry.
 
 ## Deployment
 
@@ -87,12 +93,21 @@ The same checks run in CI on every push.
 employees only if the database is empty, then serves.
 
 - Attach a volume mounted at `/data` so the SQLite database and edits persist across deploys.
-- Set `CORS_ORIGINS` to the Vercel URL.
+- Set the sign-in variables:
+
+  | Variable             | Value                                                    |
+  | -------------------- | -------------------------------------------------------- |
+  | `AUTH_USERNAME`      | the HR Manager's username, e.g. `hr.manager`             |
+  | `AUTH_PASSWORD_HASH` | output of `pnpm --filter @salary/api auth:hash-password` |
+  | `SESSION_SECRET`     | 32+ random characters, e.g. `openssl rand -base64 48`    |
+
+  The API refuses to start if any of these are missing or malformed.
 
 A [`render.yaml`](render.yaml) blueprint is also included for deploying the same image on Render.
 
 **Web on Vercel:** import the repository, set **Root Directory** to `apps/web`, and set
-`NEXT_PUBLIC_API_URL` to the API URL.
+`API_URL` to the API origin. The web app proxies `/api/*` there, so the API needs no CORS
+settings, and the build fails fast if `API_URL` is missing.
 
 ## Repository layout
 

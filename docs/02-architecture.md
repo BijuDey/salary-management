@@ -4,19 +4,21 @@
 
 ```mermaid
 flowchart LR
-    subgraph Browser
-        UI["Next.js app<br/>(React, TanStack Query)"]
-    end
+    B["Browser"]
     subgraph Vercel
-        UI
+        NEXT["Next.js app<br/>pages + /api/* rewrite"]
     end
-    subgraph "Render / Railway (Docker)"
-        API["Fastify REST API"]
+    subgraph "Railway / Render (Docker)"
+        API["Fastify REST API<br/>session check on every /api route"]
         DB[("SQLite<br/>(WAL mode)")]
         API --> DB
     end
-    UI -- "JSON over HTTPS<br/>/api/*" --> API
+    B -- "HTTPS, session cookie<br/>(same origin)" --> NEXT
+    NEXT -- "/api/* proxied" --> API
 ```
+
+The browser only ever talks to the Next.js origin. Requests to `/api/*` are proxied to the API,
+so the session cookie is first-party and no CORS is needed.
 
 Two deployable units in one pnpm workspace:
 
@@ -39,13 +41,14 @@ flowchart TD
 
 ```
 apps/api/src
-├── app.ts                  buildApp(): wires modules, CORS, error envelope
+├── app.ts                  buildApp(): public vs protected routes, error envelope
 ├── server.ts               process entry: config → migrate → listen
 ├── config.ts               env vars validated with zod
 ├── db/                     schema, connection, migrations runner
 ├── domain/                 departments, employment types, countries + FX rates
 ├── lib/                    statistics (median/percentiles/histogram), currency, errors
 ├── modules/
+│   ├── auth/               login/logout/session, password hashing, requireSession hook
 │   ├── employees/          CRUD, search/filter/sort/paginate, salary changes
 │   ├── insights/           pay summary and role benchmarks (pure calculations)
 │   └── reference/          lookup data for UI filters and forms
@@ -78,9 +81,11 @@ Every non-2xx response has the same shape, so the UI handles errors in one place
 | Status | Code                      | When                                                                |
 | ------ | ------------------------- | ------------------------------------------------------------------- |
 | 400    | `VALIDATION_ERROR`        | Request fails schema validation                                     |
+| 401    | `UNAUTHORIZED`            | Missing, expired or tampered session; wrong credentials             |
 | 404    | `NOT_FOUND`               | Unknown employee or route                                           |
 | 409    | `CONFLICT`                | Duplicate email                                                     |
 | 422    | `BUSINESS_RULE_VIOLATION` | Valid shape, but breaks a rule (e.g. relocation without new salary) |
+| 429    | `TOO_MANY_REQUESTS`       | Too many sign-in attempts                                           |
 | 500    | `INTERNAL_ERROR`          | Anything unexpected (logged, never leaked)                          |
 
 ## Data model
@@ -126,7 +131,10 @@ hire date) plus `(employee_id, effective_date)` for history lookups.
 
 | Method | Path                    | Purpose                                                                                  |
 | ------ | ----------------------- | ---------------------------------------------------------------------------------------- |
-| GET    | `/health`               | Liveness probe                                                                           |
+| GET    | `/health`               | Liveness probe (**public**)                                                              |
+| POST   | `/api/auth/login`       | Sign in; sets the session cookie (**public**, rate-limited)                              |
+| POST   | `/api/auth/logout`      | Clears the session cookie                                                                |
+| GET    | `/api/auth/session`     | Who is signed in                                                                         |
 | GET    | `/api/reference`        | Countries, departments, job titles, FX "as of" date                                      |
 | GET    | `/api/employees`        | `search`, `country`, `department`, `jobTitle`, `sortBy`, `sortOrder`, `page`, `pageSize` |
 | GET    | `/api/employees/:id`    | Employee with salary history                                                             |
@@ -136,12 +144,16 @@ hire date) plus `(employee_id, effective_date)` for history lookups.
 | GET    | `/api/insights/summary` | Org overview, by country, by department, distribution                                    |
 | GET    | `/api/insights/roles`   | Pay per job title; `country` (local currency) and `department`                           |
 
+Every route below the auth endpoints requires a valid session and returns 401 without one.
+
 ## Frontend structure
 
 ```
 apps/web/src
-├── app/                    routes only: /employees, /employees/[id], /insights
+├── app/                    routes only: /login, and (workspace)/ for signed-in pages
+├── proxy.ts                redirects visitors without a session cookie to /login
 ├── features/
+│   ├── auth/               login form, safe post-login redirects, session-expiry handling
 │   ├── employees/          directory, filters, table, form sheet, profile, dialogs
 │   └── insights/           overview, charts, country table, role explorer
 ├── components/             app shell, PayBand, form field, states, shadcn/ui
@@ -156,5 +168,8 @@ apps/web/src
   shareable and survive reloads. Parsing is a pure, tested function that ignores tampered values.
 - **Forms** use react-hook-form + zod schemas that mirror the API rules. API field errors are
   mapped back onto the matching inputs.
+- **Auth on the client:** `proxy.ts` sends visitors without a session cookie to `/login` (a UX
+  shortcut; the API is the real boundary). Any 401 clears the cookie and returns to sign-in, then
+  back to the same page.
 - **PayBand** is the one custom visual: min/P25/median/P75/max as a strip, used for countries,
   roles and to place an individual among their peers.

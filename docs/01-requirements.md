@@ -48,15 +48,15 @@ _"which country has the highest payroll cost?"_ straight from the UI.
 
 ## Deliberately left out (and why)
 
-| Left out                                       | Reasoning                                                                                                                                                                    |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Authentication / role-based access             | One persona and no multi-user requirement. It is critical for a real launch (salary data is sensitive), but it is a known, solved layer (SSO/OIDC) that adds no signal here. |
-| Live exchange rates                            | Rates are stored in a reference table with an "as of" date. Analytics need _stable_ comparisons, and a live feed would make yesterday's report disagree with today's.        |
-| Payroll processing (tax, deductions, payslips) | A different product. The problem is _managing and understanding_ pay, not paying people.                                                                                     |
-| Bonuses, equity, benefits                      | Base salary answers the core question. The schema leaves room to add compensation components later.                                                                          |
-| Excel import / export                          | Valuable for migration, but a one-off. The seed script shows bulk loading works.                                                                                             |
-| Approval workflows for pay changes             | Needs multiple roles (manager, finance). The salary history provides the audit trail in the meantime.                                                                        |
-| Multi-tenancy, i18n                            | A single organisation and an English-speaking HR team.                                                                                                                       |
+| Left out                                       | Reasoning                                                                                                                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ~~Authentication~~ / role-based access         | Originally left out: one persona, no multi-user requirement. **Authentication was later moved into scope; see the revision below.** Role-based access is still out (only one role exists). |
+| Live exchange rates                            | Rates are stored in a reference table with an "as of" date. Analytics need _stable_ comparisons, and a live feed would make yesterday's report disagree with today's.                      |
+| Payroll processing (tax, deductions, payslips) | A different product. The problem is _managing and understanding_ pay, not paying people.                                                                                                   |
+| Bonuses, equity, benefits                      | Base salary answers the core question. The schema leaves room to add compensation components later.                                                                                        |
+| Excel import / export                          | Valuable for migration, but a one-off. The seed script shows bulk loading works.                                                                                                           |
+| Approval workflows for pay changes             | Needs multiple roles (manager, finance). The salary history provides the audit trail in the meantime.                                                                                      |
+| Multi-tenancy, i18n                            | A single organisation and an English-speaking HR team.                                                                                                                                     |
 
 ## Assumptions
 
@@ -66,3 +66,23 @@ _"which country has the highest payroll cost?"_ straight from the UI.
   the data-access layer is isolated so Postgres can be swapped in if scale demands it.
 - Cross-country figures are converted to USD purely for comparison, and the original currency is
   always shown alongside.
+
+## Revision: authentication moved into scope
+
+_Made after the first deployment, before submission._
+
+I first left authentication out: the brief has a single persona, and login felt like standard
+plumbing rather than part of the problem. Deploying the app changed my mind. With a public URL,
+anyone holding the link could read every salary in the company and edit or delete records.
+Salary data is among the most sensitive information an organisation holds, and an HR tool that
+exposes it without a login isn't one I'd put in front of users, even as a demo.
+
+So the HR Manager now signs in before seeing anything:
+
+- every API endpoint except the health check rejects requests without a valid session;
+- the session is a signed, httpOnly, SameSite cookie, with an 8-hour expiry and a login rate limit;
+- the password is stored only as a scrypt hash, set through environment variables.
+
+Still deliberately out: multiple users, roles (e.g. managers seeing only their reports), SSO,
+and password reset. Those depend on how ACME manages identities, and the single-account design
+is a clean base for them (see [decisions](03-decisions.md#7-authentication-added-after-the-first-deployment)).

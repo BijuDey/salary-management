@@ -56,14 +56,36 @@ spreadsheet results (PERCENTILE.INC). At this size it takes milliseconds.
 **Revisit when:** tables grow to millions of rows. Keyset pagination on `(sort_key, id)` is the
 next step (every sort already has `id` as a tiebreaker).
 
-### 7. No authentication (deliberate gap)
+### 7. Authentication: added after the first deployment
 
-**Chosen:** none. This is listed in the requirements as out of scope.
-**Why:** a single persona and no multi-user requirement. Auth is a solved layer (OIDC/SSO via
-the company IdP) that adds no signal for this exercise.
-**Must happen before real use:** salary data is among the most sensitive data a company holds.
-Production would need SSO, role-based access (e.g. managers see their reports only), audit of
-_reads_, and encryption at rest.
+**First call:** leave it out. There was one persona, and auth felt like standard plumbing.
+**Why I changed it:** once the app was on a public URL, anyone with the link could read and edit
+every salary. Salary data is too sensitive for that, even in a demo, so I moved auth into scope
+before submission (see the [requirements revision](01-requirements.md#revision-authentication-moved-into-scope)).
+
+**Chosen:**
+
+- A single HR Manager account. Credentials come from environment variables, and the password is
+  stored only as a **scrypt** hash.
+- A **stateless signed session cookie**: HMAC-signed, `httpOnly` (scripts can't read it, so XSS
+  can't steal it), `SameSite=Lax` (not sent on cross-site writes, so no CSRF), `Secure` in
+  production, 8-hour expiry.
+- **Every `/api` route is protected** by one `onRequest` hook on an encapsulated Fastify scope, so a
+  new route is protected by default. Only `/health` is public.
+- **Login hardening:** constant-time comparisons, one generic error message (no username
+  probing), and rate limiting (10 attempts per 15 minutes per client).
+- **The web app proxies `/api/*` through its own origin** (Next.js rewrites). The cookie is
+  first-party, so it works where third-party cookies are blocked (Safari, Firefox), and CORS
+  goes away entirely.
+
+**Why not JWT in `localStorage`:** any XSS would expose the token. A cookie scripts can't read
+is the safer default for a browser app.
+**Why not server-side sessions:** they need a session store. A signed cookie keeps the API
+stateless. The trade-off is that a single session can't be revoked early, but rotating
+`SESSION_SECRET` signs everyone out.
+**Not yet:** multiple users and roles, SSO via the company identity provider, password reset,
+and an audit log of who _viewed_ which salary. All of these sit on top of the same
+`requireSession` hook.
 
 ### 8. API types duplicated in the web app
 

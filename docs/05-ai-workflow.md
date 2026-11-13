@@ -49,6 +49,24 @@ These came from running the software, not from the model's first draft:
 - **Layering smells found in review.** Runtime modules importing from `seed/`, a duplicated
   country lookup and type casts in aggregation code were refactored before commit.
 
+## A decision I revisited: authentication
+
+The agent and I first agreed to leave authentication out, and the requirements say so. After
+deploying, I reviewed the live app as a reviewer would and didn't like what I saw: a public URL
+where anyone could read and change every salary. I asked for every endpoint to be protected
+behind a login. The agent proposed the design, and I reviewed it against the threats that
+matter here:
+
+- a same-origin proxy so the session cookie stays first-party;
+- an httpOnly, SameSite, signed cookie rather than a token in `localStorage`;
+- scrypt password hashing;
+- rate-limited login;
+- a test asserting a 401 on every protected endpoint.
+
+The original decision and its reversal are both kept in the
+[requirements](01-requirements.md#revision-authentication-moved-into-scope), because changing my
+mind on evidence is part of the process.
+
 ## Principles applied to AI output
 
 - Nothing was accepted without a passing test or a visual check.
