@@ -1,0 +1,103 @@
+# ACME Pay: salary management
+
+A web application for ACME's HR Manager to manage salaries for 10,000 employees across 10
+countries, and to answer _"how does the organisation pay people?"_ without a spreadsheet.
+
+- **Directory:** search, filter and sort 10k employees; add, edit and delete them.
+- **Auditable pay changes:** every salary change needs a reason and lands in a history timeline.
+- **Pay insights:** org-wide figures, distribution, pay by department, by country (local currency
+  and USD) and by role, with pay bands that show where any salary sits among its peers.
+
+![Pay insights](docs/screenshots/pay-insights.jpg)
+
+| Directory                                    | Employee profile                                           |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| ![Directory](docs/screenshots/directory.jpg) | ![Employee profile](docs/screenshots/employee-profile.jpg) |
+
+| Live app                 | API                      |
+| ------------------------ | ------------------------ |
+| _added after deployment_ | _added after deployment_ |
+
+## Documentation
+
+| Document                                         | What it covers                                        |
+| ------------------------------------------------ | ----------------------------------------------------- |
+| [Requirements](docs/01-requirements.md)          | Goal, scope, what is deliberately left out and why    |
+| [Architecture](docs/02-architecture.md)          | System, layering, data model, API, frontend structure |
+| [Decisions and trade-offs](docs/03-decisions.md) | Each significant choice, its cost and when to revisit |
+| [Performance](docs/04-performance.md)            | Measurements, what keeps it fast, known limits        |
+| [AI workflow](docs/05-ai-workflow.md)            | How AI tools were used and how output was verified    |
+
+## Tech stack
+
+| Layer   | Choice                                                                                          |
+| ------- | ----------------------------------------------------------------------------------------------- |
+| API     | Node 22, TypeScript, Fastify 5, Drizzle ORM, SQLite (better-sqlite3), zod                       |
+| Web     | Next.js 16, React 19, shadcn/ui (Radix), Tailwind v4, TanStack Query, react-hook-form, Recharts |
+| Testing | Vitest, Testing Library, Fastify `inject` against in-memory SQLite                              |
+| Tooling | pnpm workspaces, ESLint, Prettier, GitHub Actions                                               |
+
+## Getting started
+
+Requirements: Node 22+ and pnpm 10+ (`corepack enable`).
+
+```bash
+pnpm install
+
+# API: http://localhost:4000
+cp apps/api/.env.example apps/api/.env
+pnpm db:seed                       # 10,000 deterministic employees (~0.4s)
+pnpm --filter @salary/api dev
+
+# Web: http://localhost:3000 (in a second terminal)
+cp apps/web/.env.example apps/web/.env.local
+pnpm --filter @salary/web dev
+```
+
+If ports 3000/4000 are taken, set `PORT` and `CORS_ORIGINS` in `apps/api/.env`,
+`NEXT_PUBLIC_API_URL` in `apps/web/.env.local`, and run the web app with `-- --port <n>`.
+
+Seed options: `pnpm db:seed --count=500`, `--seed=7` (different but reproducible data), and
+`--if-empty` (only seed a fresh database; used on deploy).
+
+## Quality checks
+
+```bash
+pnpm test        # 67 API + 28 web tests
+pnpm typecheck
+pnpm lint
+pnpm build
+```
+
+The same checks run in CI on every push.
+
+**What the tests cover:**
+
+- **API:** statistics maths (matching spreadsheet PERCENTILE.INC), currency conversion, seed
+  determinism and realism, employee business rules (salary history, relocation across
+  currencies, duplicate emails, search escaping, USD-normalised sorting), insights
+  aggregation, and every HTTP route including error contracts and CORS.
+- **Web:** formatting, API error mapping, URL state parsing, form validation and form-to-API
+  diffing, and pay band accessibility and geometry.
+
+## Deployment
+
+**API on Render** (or Railway): the repo includes a [`render.yaml`](render.yaml) blueprint and a
+multi-stage [`Dockerfile`](apps/api/Dockerfile) built from the repository root. On start, the
+container runs migrations, seeds 10k employees only if the database is empty, then serves.
+
+- Set `CORS_ORIGINS` to the Vercel URL.
+- Mount a persistent disk at `/data` to keep edits across deploys. Without one, each deploy
+  starts again from the same deterministic data set.
+
+**Web on Vercel:** import the repository, set **Root Directory** to `apps/web`, and set
+`NEXT_PUBLIC_API_URL` to the API URL.
+
+## Repository layout
+
+```
+apps/
+  api/        REST API, database schema and migrations, seed script
+  web/        Next.js frontend
+docs/         requirements, architecture, decisions, performance, AI workflow
+```
