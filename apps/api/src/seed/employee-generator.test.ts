@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { COUNTRIES } from '../domain/countries.js';
 import { DEPARTMENTS, INITIAL_SALARY_REASON } from '../domain/employee.js';
 import { generateEmployees } from './employee-generator.js';
-import { COUNTRIES } from './reference-data.js';
 
 describe('generateEmployees', () => {
   const generated = generateEmployees({ count: 1_000, seed: 7 });

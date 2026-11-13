@@ -20,7 +20,7 @@ import {
   type EmploymentType,
 } from '../domain/employee.js';
 import { DEPARTMENT_WEIGHTS, JOB_CATALOGUE } from './job-catalogue.js';
-import { COUNTRIES } from './reference-data.js';
+import { COUNTRIES } from '../domain/countries.js';
 
 interface CountryProfile {
   /** Share of global headcount. */

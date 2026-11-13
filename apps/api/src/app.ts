@@ -11,6 +11,11 @@ import { AppError } from './lib/errors.js';
 import { EmployeeRepository } from './modules/employees/employee.repository.js';
 import { employeeRoutes } from './modules/employees/employee.routes.js';
 import { EmployeeService } from './modules/employees/employee.service.js';
+import { InsightsRepository } from './modules/insights/insights.repository.js';
+import { insightsRoutes } from './modules/insights/insights.routes.js';
+import { InsightsService } from './modules/insights/insights.service.js';
+import { ReferenceRepository } from './modules/reference/reference.repository.js';
+import { referenceRoutes } from './modules/reference/reference.routes.js';
 
 export interface AppOptions {
   db: Database;
@@ -44,9 +49,19 @@ export async function buildApp({
 
   app.get('/health', async () => ({ status: 'ok' }));
 
+  const referenceRepository = new ReferenceRepository(db);
+
+  await app.register(referenceRoutes, {
+    prefix: '/api/reference',
+    repository: referenceRepository,
+  });
   await app.register(employeeRoutes, {
     prefix: '/api/employees',
-    service: new EmployeeService(new EmployeeRepository(db)),
+    service: new EmployeeService(new EmployeeRepository(db), referenceRepository),
+  });
+  await app.register(insightsRoutes, {
+    prefix: '/api/insights',
+    service: new InsightsService(new InsightsRepository(db), referenceRepository),
   });
 
   return app;

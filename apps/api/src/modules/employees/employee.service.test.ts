@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { BusinessRuleError, ConflictError, NotFoundError } from '../../lib/errors.js';
 import { createTestDatabase } from '../../test-utils/database.js';
 import { buildEmployeeInput } from '../../test-utils/factories.js';
+import { ReferenceRepository } from '../reference/reference.repository.js';
 import { EmployeeRepository } from './employee.repository.js';
 import { listEmployeesQuerySchema } from './employee.schemas.js';
 import { EmployeeService } from './employee.service.js';
@@ -13,7 +14,12 @@ describe('EmployeeService', () => {
   let service: EmployeeService;
 
   beforeEach(() => {
-    service = new EmployeeService(new EmployeeRepository(createTestDatabase()), () => TODAY);
+    const db = createTestDatabase();
+    service = new EmployeeService(
+      new EmployeeRepository(db),
+      new ReferenceRepository(db),
+      () => TODAY,
+    );
   });
 
   describe('create', () => {

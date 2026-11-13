@@ -4,7 +4,6 @@ import {
   countries,
   employees,
   salaryChanges,
-  type CountryRow,
   type EmployeeRow,
   type NewEmployeeRow,
   type NewSalaryChangeRow,
@@ -77,10 +76,6 @@ export class EmployeeRepository {
       .innerJoin(countries, eq(employees.countryCode, countries.code))
       .where(eq(employees.id, id))
       .get();
-  }
-
-  findCountry(code: string): CountryRow | undefined {
-    return this.db.select().from(countries).where(eq(countries.code, code)).get();
   }
 
   salaryHistory(employeeId: number): SalaryChangeRow[] {

@@ -6,6 +6,7 @@ import {
 } from '../../domain/employee.js';
 import { toUsd } from '../../lib/currency.js';
 import { BusinessRuleError, NotFoundError } from '../../lib/errors.js';
+import type { ReferenceRepository } from '../reference/reference.repository.js';
 import type { EmployeeRepository, EmployeeWithCountry } from './employee.repository.js';
 import type {
   CreateEmployeeInput,
@@ -57,6 +58,7 @@ export interface Paginated<T> {
 export class EmployeeService {
   constructor(
     private readonly repository: EmployeeRepository,
+    private readonly reference: ReferenceRepository,
     private readonly today: () => string = () => new Date().toISOString().slice(0, 10),
   ) {}
 
@@ -142,7 +144,7 @@ export class EmployeeService {
   }
 
   private requireCountry(code: string): CountryRow {
-    const country = this.repository.findCountry(code);
+    const country = this.reference.findCountry(code);
     if (!country) {
       throw new BusinessRuleError(`Unknown country code ${code}`);
     }
