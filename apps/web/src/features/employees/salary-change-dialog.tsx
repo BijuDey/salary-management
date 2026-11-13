@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { fieldAria, FormField } from '@/components/form-field';
@@ -42,7 +42,7 @@ interface SalaryChangeDialogProps {
 
 export function SalaryChangeDialog({ employee, open, onOpenChange }: SalaryChangeDialogProps) {
   const updateEmployee = useUpdateEmployee(employee.id);
-  const { register, handleSubmit, formState, watch, reset, setError } =
+  const { register, control, handleSubmit, formState, reset, setError } =
     useForm<SalaryChangeFormValues>({
       resolver: zodResolver(salaryChangeFormSchema),
     });
@@ -54,7 +54,7 @@ export function SalaryChangeDialog({ employee, open, onOpenChange }: SalaryChang
     }
   }, [open, reset]);
 
-  const proposed = Number(watch('annualSalary'));
+  const proposed = Number(useWatch({ control, name: 'annualSalary' }));
   const hasProposal = Number.isInteger(proposed) && proposed > 0;
 
   const onSubmit = handleSubmit(async (values) => {

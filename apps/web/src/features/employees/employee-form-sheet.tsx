@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { Controller, useForm, type Path } from 'react-hook-form';
+import { Controller, useForm, useWatch, type Path } from 'react-hook-form';
 import { toast } from 'sonner';
 import { fieldAria, FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
@@ -60,7 +60,7 @@ export function EmployeeFormSheet({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: employee ? employeeToForm(employee) : emptyEmployeeForm(),
   });
-  const { register, control, handleSubmit, formState, watch, setValue, setError, reset } = form;
+  const { register, control, handleSubmit, formState, setValue, setError, reset } = form;
   const errors = formState.errors;
 
   useEffect(() => {
@@ -69,8 +69,9 @@ export function EmployeeFormSheet({
     }
   }, [open, employee, reset]);
 
+  const selectedCountryCode = useWatch({ control, name: 'countryCode' });
   const countries = reference?.countries ?? [];
-  const selectedCountry = countries.find((c) => c.code === watch('countryCode'));
+  const selectedCountry = countries.find((c) => c.code === selectedCountryCode);
   const currency = selectedCountry?.currency;
 
   // Moving someone to a country with a different currency needs a new salary (an API rule too).
