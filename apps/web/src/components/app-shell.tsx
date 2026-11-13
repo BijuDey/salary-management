@@ -1,19 +1,8 @@
-'use client';
-
-import { ChartColumnBig, UsersRound } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-
-const NAVIGATION = [
-  { href: '/employees', label: 'Directory', icon: UsersRound },
-  { href: '/insights', label: 'Pay insights', icon: ChartColumnBig },
-];
+import { Suspense, type ReactNode } from 'react';
+import { MainNav, NavLinks } from './main-nav';
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
   return (
     <div className="flex min-h-svh flex-col md:flex-row">
       <aside className="bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-svh md:w-60 md:shrink-0">
@@ -30,28 +19,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
           </Link>
 
-          <nav aria-label="Main" className="flex gap-1 md:mt-8 md:flex-col">
-            {NAVIGATION.map(({ href, label, icon: Icon }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(
-                    'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
-                    'focus-visible:ring-sidebar-ring outline-none focus-visible:ring-2',
-                    active
-                      ? 'bg-sidebar-accent text-white'
-                      : 'hover:bg-sidebar-accent/60 hover:text-white',
-                  )}
-                >
-                  <Icon className={cn('size-4', active && 'text-brass')} aria-hidden />
-                  <span className="hidden sm:inline">{label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <Suspense fallback={<NavLinks />}>
+            <MainNav />
+          </Suspense>
         </div>
       </aside>
 

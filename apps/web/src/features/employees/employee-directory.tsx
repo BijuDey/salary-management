@@ -27,7 +27,7 @@ export function EmployeeDirectory() {
   const description = !data
     ? 'Find anyone in the organisation and manage their pay.'
     : isFiltered
-      ? `${formatNumber(data.total)} of the organisation match your filters.`
+      ? `${formatNumber(data.total)} employees match your filters.`
       : `${formatNumber(data.total)} employees across the organisation.`;
 
   return (
