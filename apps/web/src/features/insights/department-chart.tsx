@@ -13,8 +13,7 @@ import {
 import { formatCompactMoney, formatMoney, formatNumber } from '@/lib/format';
 import type { DepartmentPay } from '@/lib/types';
 import { ChartTooltip } from './chart-tooltip';
-
-const AXIS_TICK = { fill: 'var(--muted-foreground)', fontSize: 12 };
+import { axisTick, chartTheme } from './chart-theme';
 
 /** Median USD salary per department, highest first, with the value at each bar tip. */
 export function DepartmentChart({ departments }: { departments: DepartmentPay[] }) {
@@ -29,18 +28,18 @@ export function DepartmentChart({ departments }: { departments: DepartmentPay[] 
           margin={{ top: 0, right: 56, bottom: 0, left: 0 }}
           barCategoryGap={6}
         >
-          <CartesianGrid horizontal={false} stroke="var(--border)" />
+          <CartesianGrid horizontal={false} stroke={chartTheme.grid} />
           <XAxis type="number" hide />
           <YAxis
             type="category"
             dataKey="department"
-            tick={AXIS_TICK}
+            tick={axisTick}
             tickLine={false}
             axisLine={false}
             width={124}
           />
           <Tooltip
-            cursor={{ fill: 'var(--muted)' }}
+            cursor={{ fill: chartTheme.hover }}
             content={({ active, payload }) => {
               const department = active
                 ? (payload?.[0]?.payload as DepartmentPay | undefined)
@@ -62,12 +61,12 @@ export function DepartmentChart({ departments }: { departments: DepartmentPay[] 
               );
             }}
           />
-          <Bar dataKey="median" fill="var(--chart-1)" radius={[0, 4, 4, 0]} maxBarSize={20}>
+          <Bar dataKey="median" fill={chartTheme.mark} radius={[0, 4, 4, 0]} maxBarSize={20}>
             <LabelList
               dataKey="median"
               position="right"
               formatter={(value) => formatCompactMoney(Number(value), 'USD')}
-              style={{ fill: 'var(--foreground)', fontSize: 12 }}
+              style={{ fill: chartTheme.labelText, fontSize: 12 }}
             />
           </Bar>
         </BarChart>

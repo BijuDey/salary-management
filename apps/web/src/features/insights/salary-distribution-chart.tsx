@@ -4,8 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { formatCompactMoney, formatMoney, formatNumber } from '@/lib/format';
 import type { HistogramBucket } from '@/lib/types';
 import { ChartTooltip } from './chart-tooltip';
-
-const AXIS_TICK = { fill: 'var(--muted-foreground)', fontSize: 12 };
+import { axisTick, chartTheme } from './chart-theme';
 
 /** How many people earn within each USD salary range: shows banding, skew and outliers. */
 export function SalaryDistributionChart({ buckets }: { buckets: HistogramBucket[] }) {
@@ -19,24 +18,24 @@ export function SalaryDistributionChart({ buckets }: { buckets: HistogramBucket[
     <div className="h-72" role="img" aria-label="Histogram of employee salaries in USD">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -8 }} barCategoryGap={2}>
-          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <CartesianGrid vertical={false} stroke={chartTheme.grid} />
           <XAxis
             dataKey="label"
-            tick={AXIS_TICK}
+            tick={axisTick}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
             minTickGap={16}
           />
           <YAxis
-            tick={AXIS_TICK}
+            tick={axisTick}
             tickLine={false}
             axisLine={false}
             tickFormatter={formatNumber}
             width={48}
           />
           <Tooltip
-            cursor={{ fill: 'var(--muted)' }}
+            cursor={{ fill: chartTheme.hover }}
             content={({ active, payload }) => {
               const bucket = active
                 ? (payload?.[0]?.payload as HistogramBucket | undefined)
@@ -53,7 +52,7 @@ export function SalaryDistributionChart({ buckets }: { buckets: HistogramBucket[
               );
             }}
           />
-          <Bar dataKey="count" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={24} />
+          <Bar dataKey="count" fill={chartTheme.mark} radius={[4, 4, 0, 0]} maxBarSize={24} />
         </BarChart>
       </ResponsiveContainer>
     </div>
