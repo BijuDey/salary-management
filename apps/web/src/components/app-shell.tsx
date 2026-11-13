@@ -39,7 +39,7 @@ function BrandMark() {
       <rect width="28" height="28" rx="6" fill="#17504f" />
       <rect x="6" y="15" width="4" height="7" rx="1" fill="#9fbab6" />
       <rect x="12" y="10" width="4" height="12" rx="1" fill="#d7e3e1" />
-      <rect x="18" y="6" width="4" height="16" rx="1" fill="#c08a2e" />
+      <rect x="18" y="6" width="4" height="16" rx="1" fill="#b07a1f" />
     </svg>
   );
 }

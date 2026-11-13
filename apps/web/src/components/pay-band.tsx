@@ -50,7 +50,7 @@ export function PayBand({ stats, currency, domain, marker, className }: PayBandP
         }}
       />
       <span
-        className="bg-brass/80 absolute top-1/2 h-2.5 -translate-y-1/2 rounded-[2px]"
+        className="bg-brass absolute top-1/2 h-2.5 -translate-y-1/2 rounded-[2px]"
         style={{
           left: `${position(stats.p25)}%`,
           width: `max(2px, ${position(stats.p75) - position(stats.p25)}%)`,

@@ -53,7 +53,7 @@
   /* ACME pay palette: petrol ink, cool paper, brass for pay bands */
   --petrol: #0f3d3e;
   --petrol-soft: #e3ecea;
-  --brass: #c08a2e;
+  --brass: #b07a1f;
   --brass-soft: #f3e6cc;
   --paper: #f6f7f4;
   --graphite: #1d2626;
@@ -76,7 +76,7 @@
   --border: #dde1dc;
   --input: #d3d8d2;
   --ring: #3f7f7c;
-  --chart-1: var(--petrol);
+  --chart-1: #1f7a72;
   --chart-2: var(--brass);
   --chart-3: #5f9590;
   --chart-4: #d9b571;
