@@ -1,0 +1,31 @@
+# Assessment brief — kept local, never committed
+*.pdf
+
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+apps/api/data/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Tooling
+coverage/
+.vercel
+.turbo
+.DS_Store
+*.log
