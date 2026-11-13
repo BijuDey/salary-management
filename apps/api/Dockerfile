@@ -2,8 +2,8 @@
 #   docker build -f apps/api/Dockerfile -t salary-api .
 
 FROM node:22-slim AS base
-ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
-RUN corepack enable
+# Same pnpm as the workspace's packageManager field, installed without corepack prompts.
+RUN npm install -g pnpm@11.28.9
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
@@ -24,4 +24,5 @@ COPY apps/api/drizzle apps/api/drizzle
 WORKDIR /app/apps/api
 EXPOSE 4000
 # Migrates, seeds 10k employees only if the database is empty, then serves.
-CMD ["pnpm", "start:prod"]
+# `exec` makes node PID 1 so platform stop signals reach the server for a graceful shutdown.
+CMD ["sh", "-c", "node dist/seed/seed.js --if-empty && exec node dist/server.js"]

@@ -82,13 +82,14 @@ The same checks run in CI on every push.
 
 ## Deployment
 
-**API on Render** (or Railway): the repo includes a [`render.yaml`](render.yaml) blueprint and a
-multi-stage [`Dockerfile`](apps/api/Dockerfile) built from the repository root. On start, the
-container runs migrations, seeds 10k employees only if the database is empty, then serves.
+**API on Railway:** [`railway.json`](railway.json) builds the API from its multi-stage
+[`Dockerfile`](apps/api/Dockerfile). On start, the container runs migrations, seeds 10k
+employees only if the database is empty, then serves.
 
+- Attach a volume mounted at `/data` so the SQLite database and edits persist across deploys.
 - Set `CORS_ORIGINS` to the Vercel URL.
-- Mount a persistent disk at `/data` to keep edits across deploys. Without one, each deploy
-  starts again from the same deterministic data set.
+
+A [`render.yaml`](render.yaml) blueprint is also included for deploying the same image on Render.
 
 **Web on Vercel:** import the repository, set **Root Directory** to `apps/web`, and set
 `NEXT_PUBLIC_API_URL` to the API URL.
