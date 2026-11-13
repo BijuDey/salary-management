@@ -2,7 +2,7 @@
   "name": "salary-management",
   "private": true,
   "description": "Employee salary management for ACME's HR team",
-  "packageManager": "pnpm@11.12.0",
+  "packageManager": "pnpm@11.28.9",
   "engines": {
     "node": ">=22"
   },
