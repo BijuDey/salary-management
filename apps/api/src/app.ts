@@ -1,4 +1,3 @@
-import cors from '@fastify/cors';
 import Fastify, {
   type FastifyError,
   type FastifyInstance,
@@ -8,6 +7,7 @@ import Fastify, {
 import { ZodError } from 'zod';
 import type { Database } from './db/client.js';
 import { AppError } from './lib/errors.js';
+import { authPlugin, type AuthOptions } from './modules/auth/auth.routes.js';
 import { EmployeeRepository } from './modules/employees/employee.repository.js';
 import { employeeRoutes } from './modules/employees/employee.routes.js';
 import { EmployeeService } from './modules/employees/employee.service.js';
@@ -19,7 +19,7 @@ import { referenceRoutes } from './modules/reference/reference.routes.js';
 
 export interface AppOptions {
   db: Database;
-  corsOrigins?: string[];
+  auth: AuthOptions;
   logger?: boolean;
 }
 
@@ -30,19 +30,13 @@ export interface ErrorResponse {
 /**
  * Builds the HTTP application. Dependencies are passed in rather than imported, so tests can
  * run the full stack against an in-memory database.
+ *
+ * The web app proxies /api/* through its own origin, so the browser never calls this server
+ * cross-origin: no CORS is needed, and the session cookie stays first-party.
  */
-export async function buildApp({
-  db,
-  corsOrigins = [],
-  logger = false,
-}: AppOptions): Promise<FastifyInstance> {
-  const app = Fastify({ logger });
-
-  await app.register(cors, {
-    origin: corsOrigins,
-    // The default only covers simple requests; the UI also edits and deletes.
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  });
+export async function buildApp({ db, auth, logger = false }: AppOptions): Promise<FastifyInstance> {
+  // Behind the platform's proxy (and the web app's rewrite): use X-Forwarded-For for client IPs.
+  const app = Fastify({ logger, trustProxy: true });
 
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) => {
@@ -51,21 +45,28 @@ export async function buildApp({
     } satisfies ErrorResponse);
   });
 
+  // Public: platform health checks and signing in.
   app.get('/health', async () => ({ status: 'ok' }));
+  await app.register(authPlugin, auth);
 
-  const referenceRepository = new ReferenceRepository(db);
+  // Everything else under /api requires a valid session.
+  await app.register(async (protectedApi) => {
+    protectedApi.addHook('onRequest', protectedApi.requireSession);
 
-  await app.register(referenceRoutes, {
-    prefix: '/api/reference',
-    repository: referenceRepository,
-  });
-  await app.register(employeeRoutes, {
-    prefix: '/api/employees',
-    service: new EmployeeService(new EmployeeRepository(db), referenceRepository),
-  });
-  await app.register(insightsRoutes, {
-    prefix: '/api/insights',
-    service: new InsightsService(new InsightsRepository(db), referenceRepository),
+    const referenceRepository = new ReferenceRepository(db);
+
+    await protectedApi.register(referenceRoutes, {
+      prefix: '/api/reference',
+      repository: referenceRepository,
+    });
+    await protectedApi.register(employeeRoutes, {
+      prefix: '/api/employees',
+      service: new EmployeeService(new EmployeeRepository(db), referenceRepository),
+    });
+    await protectedApi.register(insightsRoutes, {
+      prefix: '/api/insights',
+      service: new InsightsService(new InsightsRepository(db), referenceRepository),
+    });
   });
 
   return app;

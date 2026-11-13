@@ -1,16 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { buildApp } from '../../app.js';
 import { seedDatabase } from '../../seed/seed-database.js';
+import { authenticatedInject, buildTestApp, signIn } from '../../test-utils/app.js';
 import { createTestDatabase } from '../../test-utils/database.js';
 
 describe('Insights and reference routes', () => {
   let app: FastifyInstance;
+  let inject: ReturnType<typeof authenticatedInject>;
 
   beforeAll(async () => {
     const db = createTestDatabase();
     seedDatabase(db, { count: 500 });
-    app = await buildApp({ db });
+    app = await buildTestApp(db);
+    inject = authenticatedInject(app, await signIn(app));
   });
 
   afterAll(async () => {
@@ -18,7 +20,7 @@ describe('Insights and reference routes', () => {
   });
 
   it('GET /api/insights/summary returns org-wide pay analytics', async () => {
-    const response = await app.inject({ url: '/api/insights/summary' });
+    const response = await inject({ url: '/api/insights/summary' });
     const body = response.json();
 
     expect(response.statusCode).toBe(200);
@@ -31,7 +33,7 @@ describe('Insights and reference routes', () => {
   });
 
   it('GET /api/insights/roles?country=DE reports in the local currency', async () => {
-    const response = await app.inject({ url: '/api/insights/roles?country=de' });
+    const response = await inject({ url: '/api/insights/roles?country=de' });
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
@@ -41,7 +43,7 @@ describe('Insights and reference routes', () => {
   });
 
   it('GET /api/insights/roles without a country reports in USD', async () => {
-    const response = await app.inject({ url: '/api/insights/roles?department=Engineering' });
+    const response = await inject({ url: '/api/insights/roles?department=Engineering' });
     const body = response.json();
 
     expect(body.currency).toBe('USD');
@@ -52,12 +54,12 @@ describe('Insights and reference routes', () => {
   });
 
   it('GET /api/insights/roles rejects an unknown country', async () => {
-    const response = await app.inject({ url: '/api/insights/roles?country=ZZ' });
+    const response = await inject({ url: '/api/insights/roles?country=ZZ' });
     expect(response.statusCode).toBe(422);
   });
 
   it('GET /api/reference returns lookup data for filters and forms', async () => {
-    const body = (await app.inject({ url: '/api/reference' })).json();
+    const body = (await inject({ url: '/api/reference' })).json();
 
     expect(body.countries).toHaveLength(10);
     expect(body.departments).toContain('Engineering');

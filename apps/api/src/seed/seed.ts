@@ -6,7 +6,7 @@
  *   pnpm db:seed --if-empty         # only seed a fresh database (safe on every deploy)
  */
 import { parseArgs } from 'node:util';
-import { loadConfig } from '../config.js';
+import { loadDatabaseConfig } from '../config.js';
 import { openDatabase, runMigrations } from '../db/client.js';
 import { countEmployees, seedDatabase } from './seed-database.js';
 
@@ -20,7 +20,7 @@ const { values: args } = parseArgs({
   },
 });
 
-const config = loadConfig();
+const config = loadDatabaseConfig();
 const { db, close } = openDatabase(config.DATABASE_PATH);
 
 try {

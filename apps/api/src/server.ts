@@ -8,7 +8,13 @@ runMigrations(db);
 
 const app = await buildApp({
   db,
-  corsOrigins: config.CORS_ORIGINS,
+  auth: {
+    username: config.AUTH_USERNAME,
+    passwordHash: config.AUTH_PASSWORD_HASH,
+    sessionSecret: config.SESSION_SECRET,
+    sessionTtlMs: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
+    secureCookies: config.NODE_ENV === 'production',
+  },
   logger: config.NODE_ENV !== 'test',
 });
 

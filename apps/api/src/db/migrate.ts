@@ -1,7 +1,7 @@
-import { loadConfig } from '../config.js';
+import { loadDatabaseConfig } from '../config.js';
 import { openDatabase, runMigrations } from './client.js';
 
-const config = loadConfig();
+const config = loadDatabaseConfig();
 const { db, close } = openDatabase(config.DATABASE_PATH);
 
 runMigrations(db);

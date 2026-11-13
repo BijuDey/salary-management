@@ -1,14 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildApp } from '../../app.js';
-import { createTestDatabase } from '../../test-utils/database.js';
+import { authenticatedInject, buildTestApp, signIn } from '../../test-utils/app.js';
 import { buildEmployeeInput } from '../../test-utils/factories.js';
 
 describe('Employee routes', () => {
   let app: FastifyInstance;
+  let inject: ReturnType<typeof authenticatedInject>;
 
   beforeEach(async () => {
-    app = await buildApp({ db: createTestDatabase() });
+    app = await buildTestApp();
+    inject = authenticatedInject(app, await signIn(app));
   });
 
   afterEach(async () => {
@@ -16,7 +17,7 @@ describe('Employee routes', () => {
   });
 
   const createEmployee = (body: object = buildEmployeeInput()) =>
-    app.inject({ method: 'POST', url: '/api/employees', payload: body });
+    inject({ method: 'POST', url: '/api/employees', payload: body });
 
   it('POST /api/employees creates an employee and returns 201 with a location header', async () => {
     const response = await createEmployee();
@@ -51,28 +52,28 @@ describe('Employee routes', () => {
     await createEmployee();
     await createEmployee();
 
-    const response = await app.inject({ url: '/api/employees?pageSize=1' });
+    const response = await inject({ url: '/api/employees?pageSize=1' });
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ total: 2, totalPages: 2, page: 1 });
   });
 
   it('GET /api/employees rejects an invalid page size', async () => {
-    const response = await app.inject({ url: '/api/employees?pageSize=1000' });
+    const response = await inject({ url: '/api/employees?pageSize=1000' });
     expect(response.statusCode).toBe(400);
   });
 
   it('GET /api/employees/:id returns the employee with salary history', async () => {
     const { id } = (await createEmployee()).json();
 
-    const response = await app.inject({ url: `/api/employees/${id}` });
+    const response = await inject({ url: `/api/employees/${id}` });
 
     expect(response.statusCode).toBe(200);
     expect(response.json().salaryHistory).toHaveLength(1);
   });
 
   it('GET /api/employees/:id returns 404 for an unknown employee', async () => {
-    const response = await app.inject({ url: '/api/employees/999' });
+    const response = await inject({ url: '/api/employees/999' });
 
     expect(response.statusCode).toBe(404);
     expect(response.json().error.code).toBe('NOT_FOUND');
@@ -81,7 +82,7 @@ describe('Employee routes', () => {
   it('PATCH /api/employees/:id returns 422 when a business rule is broken', async () => {
     const { id } = (await createEmployee(buildEmployeeInput({ countryCode: 'GB' }))).json();
 
-    const response = await app.inject({
+    const response = await inject({
       method: 'PATCH',
       url: `/api/employees/${id}`,
       payload: { countryCode: 'IN' },
@@ -93,7 +94,7 @@ describe('Employee routes', () => {
   it('PATCH /api/employees/:id rejects an empty update', async () => {
     const { id } = (await createEmployee()).json();
 
-    const response = await app.inject({
+    const response = await inject({
       method: 'PATCH',
       url: `/api/employees/${id}`,
       payload: {},
@@ -105,36 +106,14 @@ describe('Employee routes', () => {
   it('DELETE /api/employees/:id returns 204 and the employee is gone', async () => {
     const { id } = (await createEmployee()).json();
 
-    const response = await app.inject({ method: 'DELETE', url: `/api/employees/${id}` });
+    const response = await inject({ method: 'DELETE', url: `/api/employees/${id}` });
 
     expect(response.statusCode).toBe(204);
-    expect((await app.inject({ url: `/api/employees/${id}` })).statusCode).toBe(404);
-  });
-
-  it('allows the configured UI origin to PATCH and DELETE (CORS preflight)', async () => {
-    const corsApp = await buildApp({
-      db: createTestDatabase(),
-      corsOrigins: ['http://localhost:3000'],
-    });
-
-    const response = await corsApp.inject({
-      method: 'OPTIONS',
-      url: '/api/employees/1',
-      headers: {
-        origin: 'http://localhost:3000',
-        'access-control-request-method': 'PATCH',
-      },
-    });
-
-    expect(response.statusCode).toBe(204);
-    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
-    expect(response.headers['access-control-allow-methods']).toContain('PATCH');
-    expect(response.headers['access-control-allow-methods']).toContain('DELETE');
-    await corsApp.close();
+    expect((await inject({ url: `/api/employees/${id}` })).statusCode).toBe(404);
   });
 
   it('returns a JSON 404 for unknown routes', async () => {
-    const response = await app.inject({ url: '/api/nope' });
+    const response = await inject({ url: '/api/nope' });
     expect(response.statusCode).toBe(404);
     expect(response.json().error.code).toBe('NOT_FOUND');
   });

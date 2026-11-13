@@ -1,4 +1,5 @@
-# Render Blueprint for the API. The web app deploys to Vercel (root directory: apps/web).
+# Render Blueprint for the API. The web app deploys to Vercel (root directory: apps/web)
+# and proxies /api/* here, so no CORS configuration is needed.
 services:
   - type: web
     name: salary-management-api
@@ -7,8 +8,12 @@ services:
     dockerContext: .
     healthCheckPath: /health
     envVars:
-      - key: CORS_ORIGINS
-        sync: false # e.g. https://salary-management.vercel.app
+      - key: AUTH_USERNAME
+        sync: false # the HR Manager's login, e.g. hr.manager
+      - key: AUTH_PASSWORD_HASH
+        sync: false # pnpm --filter @salary/api auth:hash-password
+      - key: SESSION_SECRET
+        generateValue: true
     # A persistent disk keeps edits across deploys (requires a paid instance).
     # Without it the container reseeds the same deterministic 10k employees on each deploy.
     disk:
